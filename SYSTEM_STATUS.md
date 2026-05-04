@@ -7,21 +7,21 @@
 
 ## Current State
 
-AgentFlow review loop is live.
-Task polling, Claude review, defect creation, and status updates are all automated.
-The only remaining manual step: Human final approval before deployment.
+**Full AgentFlow loop is operational end-to-end.**
+Zero manual steps after a ticket is set to status 3 (Ready).
 
 ## Loop Status
 
 | Step | Status |
 |---|---|
-| Leantime → n8n detect task | ✅ Auto (every 5 min) |
-| n8n → Developer agent dispatch | ⚠️ TASK-SYS-001 pending |
-| Codex → push code → GitHub | Manual (Codex does this) |
+| Leantime → n8n detect task (status 3) | ✅ Auto (every 5 min) |
+| n8n → GitHub Actions dispatch | ✅ Auto (workflow_dispatch) |
+| GitHub Actions → OpenAI → push code | ✅ Auto (dispatcher.py) |
+| Push code → Leantime status 2 | ✅ Auto (dispatcher.py) |
 | GitHub diff → Claude review | ✅ Auto (every 5 min) |
-| Claude PASS → notify Human | ✅ Auto (Leantime comment) |
-| Claude FAIL → defect ticket | ✅ Auto (new ticket created) |
-| Human approval → deploy | 🔴 Manual — by design |
+| Claude PASS → GitHub PR created | ✅ Auto (PR title: [AgentFlow ✅ PASS] ...) |
+| Claude FAIL → defect ticket + Blocked | ✅ Auto |
+| Human merge PR → Leantime status Done | ✅ Auto (GitHub webhook → n8n) |
 
 ---
 
@@ -118,8 +118,32 @@ gh CLI is configured and authenticated on the local machine.
 
 ## What Is NOT Yet Built
 
-1. **Dispatch leg** — n8n → developer agent (TASK-SYS-001 assigned to Codex)
-2. **Human notification** — no push notification when PASS comment is posted
+1. **Human notification** — no push/email when PR is created (optional)
+2. **TASK-P01-002+** — next features for Salah Time app not yet created
+
+## n8n Workflows
+
+| Workflow | ID | Trigger |
+|---|---|---|
+| AgentFlow — Task Dispatcher | At8kNctb4ncMEfT9 | Schedule 5min + webhook |
+| AgentFlow — Claude Review | RXPH8v3U2tHaXG1n | Schedule 5min + webhook |
+| AgentFlow — PR Merged → Done | jO3J8J3UPYcJVXeQ | GitHub webhook |
+
+## Manual Trigger URLs
+
+| Workflow | URL |
+|---|---|
+| Task Dispatcher | POST http://ai.cocofriday.com/webhook/agentflow-trigger |
+| Claude Review | POST http://ai.cocofriday.com/webhook/agentflow-review |
+| PR Merged (test) | POST http://ai.cocofriday.com/webhook/agentflow-pr-merged |
+
+## Known Quirks
+
+- Leantime `addComment` via JSON-RPC stores with `module='tickets'` but UI reads `module='ticket'` → comments don't show in Leantime UI. Switched to GitHub PR as review output instead.
+- Leantime addComment correct params: `module`, `entity`, `entityId` top-level; `values.text` + `values.father` (NOT `commentParent`). Returns HTTP 500 (notification crash) but INSERT succeeds.
+- Claude Review dedup: checks if open PR exists on GitHub for the branch before running review.
+- PR Merged webhook: GitHub salah-time repo → n8n webhook (POST http://ai.cocofriday.com/webhook/agentflow-pr-merged) → update Leantime to status 0 (Done).
+- Ticket ID extracted from PR body regex `\[#(\d+)\]`.
 
 ## n8n Manual Trigger URLs
 
