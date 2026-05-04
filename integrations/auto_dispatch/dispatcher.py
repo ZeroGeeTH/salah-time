@@ -251,11 +251,18 @@ def main() -> int:
     leantime_url = require_env("AGENTFLOW_LEANTIME_URL")
     project_id = int(os.environ.get("AGENTFLOW_PROJECT_ID", "43"))
 
-    # Fetch full task body from Leantime instead of relying on env var
-    ticket = fetch_leantime_ticket(leantime_url, leantime_api_key, project_id)
-    task_body = str(ticket.get("description", ""))
-    if not task_body:
-        task_body = task_title
+    # Primary spec source: tasks/{task_id}.md in this repo (checked out by Actions)
+    spec_file = Path(__file__).parent.parent.parent / "tasks" / f"{task_id}.md"
+    if spec_file.exists():
+        task_body = spec_file.read_text(encoding="utf-8")
+        print(f"Loaded spec from {spec_file} ({len(task_body)} chars)")
+    else:
+        # Fallback: Leantime description field
+        ticket = fetch_leantime_ticket(leantime_url, leantime_api_key, project_id)
+        task_body = str(ticket.get("description", "")).strip()
+        if not task_body:
+            task_body = task_title
+        print(f"No spec file found — using Leantime description ({len(task_body)} chars)")
 
     branch = parse_branch(task_body, task_id)
     commit_message = parse_commit_message(task_body, task_id)
