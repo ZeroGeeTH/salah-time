@@ -7,9 +7,21 @@
 
 ## Current State
 
-AgentFlow is partially operational.
-The task management and polling loop are live.
-The dispatch leg (n8n → developer agent) is NOT yet implemented.
+AgentFlow review loop is live.
+Task polling, Claude review, defect creation, and status updates are all automated.
+The only remaining manual step: Human final approval before deployment.
+
+## Loop Status
+
+| Step | Status |
+|---|---|
+| Leantime → n8n detect task | ✅ Auto (every 5 min) |
+| n8n → Developer agent dispatch | ⚠️ TASK-SYS-001 pending |
+| Codex → push code → GitHub | Manual (Codex does this) |
+| GitHub diff → Claude review | ✅ Auto (every 5 min) |
+| Claude PASS → notify Human | ✅ Auto (Leantime comment) |
+| Claude FAIL → defect ticket | ✅ Auto (new ticket created) |
+| Human approval → deploy | 🔴 Manual — by design |
 
 ---
 
@@ -22,6 +34,7 @@ The dispatch leg (n8n → developer agent) is NOT yet implemented.
 | GitHub — agentflow repo | ✅ Live | https://github.com/ZeroGeeTH/agentflow |
 | GitHub — salah-time repo | ✅ Live | https://github.com/ZeroGeeTH/salah-time |
 | n8n workflow: Task Dispatcher | ✅ Active | Workflow ID: At8kNctb4ncMEfT9 |
+| n8n workflow: Claude Review | ✅ Active | Workflow ID: RXPH8v3U2tHaXG1n |
 
 ---
 
@@ -105,9 +118,15 @@ gh CLI is configured and authenticated on the local machine.
 
 ## What Is NOT Yet Built
 
-1. **Dispatch leg** — n8n cannot yet send task specs to a developer agent automatically
-2. **Review trigger** — Claude is not yet notified when code is ready for review
-3. **Feedback loop** — defect tasks are not yet created or dispatched automatically
+1. **Dispatch leg** — n8n → developer agent (TASK-SYS-001 assigned to Codex)
+2. **Human notification** — no push notification when PASS comment is posted
+
+## n8n Manual Trigger URLs
+
+| Workflow | URL |
+|---|---|
+| Task Dispatcher | POST http://ai.cocofriday.com/webhook/agentflow-trigger |
+| Claude Review | POST http://ai.cocofriday.com/webhook/agentflow-review |
 
 ---
 
