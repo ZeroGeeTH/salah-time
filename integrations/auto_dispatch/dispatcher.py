@@ -278,7 +278,7 @@ def main() -> int:
             raise RuntimeError("Agent produced no file changes")
 
         run(["git", "commit", "-m", commit_message], cwd=repo_dir)
-        run(["git", "push", "-u", "origin", branch], cwd=repo_dir)
+        run(["git", "push", "--force", "-u", "origin", branch], cwd=repo_dir)
 
     update_leantime_status(leantime_url, leantime_api_key, ticket_id, WAITING_FOR_APPROVAL_STATUS, project_id)
     print(
