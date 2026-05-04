@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salah Time App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Salah Time App</h1>
+  </header>
+  <main>
+    <section class="location-section">
+      <label for="location-input">Enter Location:</label>
+      <input type="text" id="location-input" placeholder="City or Zip Code">
+      <button id="get-times-btn">Get Salah Times</button>
+    </section>
+    <section class="salah-times-section">
+      <h2>Today's Salah Times</h2>
+      <table class="salah-times-table">
+        <thead>
+          <tr>
+            <th>Prayer</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Fajr</td><td>--:--</td></tr>
+          <tr><td>Dhuhr</td><td>--:--</td></tr>
+          <tr><td>Asr</td><td>--:--</td></tr>
+          <tr><td>Maghrib</td><td>--:--</td></tr>
+          <tr><td>Isha</td><td>--:--</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2024 Salah Time App</p>
+  </footer>
+</body>
+</html>
