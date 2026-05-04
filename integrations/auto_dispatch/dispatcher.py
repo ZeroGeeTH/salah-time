@@ -56,19 +56,20 @@ def request_json(url: str, headers: dict[str, str], payload: dict[str, Any]) -> 
     return json.loads(body) if body else {}
 
 
-def update_leantime_status(leantime_url: str, api_key: str, ticket_id: str, status: int) -> None:
+def update_leantime_status(leantime_url: str, api_key: str, ticket_id: str, status: int, project_id: int = 43) -> None:
     payload = {
         "jsonrpc": "2.0",
         "method": "leantime.rpc.tickets.updateTicket",
         "params": {
-            "id": int(ticket_id),
             "values": {
+                "id": int(ticket_id),
                 "status": status,
+                "projectId": project_id,
             },
         },
         "id": f"agentflow-ticket-{ticket_id}-status-{status}",
     }
-    request_json(
+    result = request_json(
         leantime_url,
         {
             "Content-Type": "application/json",
@@ -76,6 +77,24 @@ def update_leantime_status(leantime_url: str, api_key: str, ticket_id: str, stat
         },
         payload,
     )
+    if isinstance(result.get("result"), dict) and result["result"].get("type") == "error":
+        raise RuntimeError(f"Leantime update failed: {result['result'].get('msg')}")
+    if "error" in result:
+        raise RuntimeError(f"Leantime API error: {result['error']}")
+
+
+def fetch_leantime_ticket(leantime_url: str, api_key: str, project_id: int) -> dict[str, Any]:
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "leantime.rpc.tickets.getAll",
+        "id": "fetch-tickets",
+        "params": {"projectId": project_id},
+    }
+    result = request_json(leantime_url, {"Content-Type": "application/json", "x-api-key": api_key}, payload)
+    tickets = result.get("result", [])
+    if not tickets:
+        raise RuntimeError(f"No tickets found in project {project_id}")
+    return tickets[0]
 
 
 def parse_branch(task_body: str, task_id: str) -> str:
@@ -228,14 +247,20 @@ def main() -> int:
     ticket_id = require_env("AGENTFLOW_TICKET_ID")
     task_id = require_env("AGENTFLOW_TASK_ID")
     task_title = require_env("AGENTFLOW_TASK_TITLE")
-    task_body = require_env("AGENTFLOW_TASK_BODY")
     target_repo = require_env("AGENTFLOW_TARGET_REPO")
     leantime_url = require_env("AGENTFLOW_LEANTIME_URL")
+    project_id = int(os.environ.get("AGENTFLOW_PROJECT_ID", "43"))
+
+    # Fetch full task body from Leantime instead of relying on env var
+    ticket = fetch_leantime_ticket(leantime_url, leantime_api_key, project_id)
+    task_body = str(ticket.get("description", ""))
+    if not task_body:
+        task_body = task_title
 
     branch = parse_branch(task_body, task_id)
     commit_message = parse_commit_message(task_body, task_id)
 
-    update_leantime_status(leantime_url, leantime_api_key, ticket_id, IN_PROGRESS_STATUS)
+    update_leantime_status(leantime_url, leantime_api_key, ticket_id, IN_PROGRESS_STATUS, project_id)
 
     with tempfile.TemporaryDirectory(prefix="agentflow-") as tmp:
         work_root = Path(tmp)
@@ -255,7 +280,7 @@ def main() -> int:
         run(["git", "commit", "-m", commit_message], cwd=repo_dir)
         run(["git", "push", "-u", "origin", branch], cwd=repo_dir)
 
-    update_leantime_status(leantime_url, leantime_api_key, ticket_id, WAITING_FOR_APPROVAL_STATUS)
+    update_leantime_status(leantime_url, leantime_api_key, ticket_id, WAITING_FOR_APPROVAL_STATUS, project_id)
     print(
         json.dumps(
             {

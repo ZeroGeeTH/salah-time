@@ -15,10 +15,6 @@ on:
         description: Leantime ticket title
         required: true
         type: string
-      task_body:
-        description: Full AgentFlow task body
-        required: true
-        type: string
       target_repo:
         description: GitHub repository that receives code changes
         required: true
@@ -55,8 +51,8 @@ jobs:
           AGENTFLOW_TICKET_ID: ${{ inputs.ticket_id }}
           AGENTFLOW_TASK_ID: ${{ inputs.task_id }}
           AGENTFLOW_TASK_TITLE: ${{ inputs.task_title }}
-          AGENTFLOW_TASK_BODY: ${{ inputs.task_body }}
           AGENTFLOW_TARGET_REPO: ${{ inputs.target_repo }}
+          AGENTFLOW_PROJECT_ID: "43"
           AGENTFLOW_LEANTIME_URL: ${{ inputs.leantime_url }}
         run: python integrations/auto_dispatch/dispatcher.py
 
