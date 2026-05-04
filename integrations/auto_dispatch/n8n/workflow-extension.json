@@ -1,0 +1,45 @@
+{
+  "name": "AgentFlow Dispatch Extension",
+  "description": "Add these nodes after the existing Leantime status=4 update node in workflow At8kNctb4ncMEfT9.",
+  "nodes": [
+    {
+      "name": "Build GitHub Dispatch Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const ticket = $json;\nconst taskIdMatch = String(ticket.headline || ticket.title || ticket.description || '').match(/TASK-[A-Z0-9-]+/);\nreturn [{ json: {\n  ref: 'main',\n  inputs: {\n    ticket_id: String(ticket.id),\n    task_id: taskIdMatch ? taskIdMatch[0] : String(ticket.id),\n    task_title: String(ticket.headline || ticket.title || ''),\n    task_body: String(ticket.description || ticket.body || ''),\n    target_repo: ticket.target_repo || 'ZeroGeeTH/salah-time',\n    leantime_url: 'https://project.cocofriday.com/api/jsonrpc/'\n  }\n}}];"
+      }
+    },
+    {
+      "name": "Trigger AgentFlow GitHub Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/ZeroGeeTH/agentflow/actions/workflows/agentflow-dispatch.yml/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.githubApi.accessToken}}"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{$json}}"
+      }
+    }
+  ],
+  "connection": "Connect the existing YES branch after Leantime status update to Build GitHub Dispatch Payload, then to Trigger AgentFlow GitHub Action."
+}
+

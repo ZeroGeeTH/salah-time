@@ -1,0 +1,62 @@
+name: AgentFlow Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: Leantime ticket id
+        required: true
+        type: string
+      task_id:
+        description: AgentFlow task id
+        required: true
+        type: string
+      task_title:
+        description: Leantime ticket title
+        required: true
+        type: string
+      task_body:
+        description: Full AgentFlow task body
+        required: true
+        type: string
+      target_repo:
+        description: GitHub repository that receives code changes
+        required: true
+        default: ZeroGeeTH/salah-time
+        type: string
+      leantime_url:
+        description: Leantime JSON-RPC endpoint
+        required: true
+        default: https://project.cocofriday.com/api/jsonrpc/
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    name: Run developer agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out AgentFlow
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run dispatcher
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENTFLOW_GITHUB_TOKEN: ${{ secrets.AGENTFLOW_GITHUB_TOKEN }}
+          LEANTIME_API_KEY: ${{ secrets.LEANTIME_API_KEY }}
+          AGENTFLOW_TICKET_ID: ${{ inputs.ticket_id }}
+          AGENTFLOW_TASK_ID: ${{ inputs.task_id }}
+          AGENTFLOW_TASK_TITLE: ${{ inputs.task_title }}
+          AGENTFLOW_TASK_BODY: ${{ inputs.task_body }}
+          AGENTFLOW_TARGET_REPO: ${{ inputs.target_repo }}
+          AGENTFLOW_LEANTIME_URL: ${{ inputs.leantime_url }}
+        run: python integrations/auto_dispatch/dispatcher.py
+
