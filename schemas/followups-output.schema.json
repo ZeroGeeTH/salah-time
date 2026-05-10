@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FollowUpsOutput",
+  "type": "object",
+  "properties": {
+    "followUps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "question": { "type": "string" },
+          "answer": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "question", "answer", "createdAt"]
+      }
+    }
+  },
+  "required": ["followUps"]
+}
