@@ -1,0 +1,10 @@
+Follow-Up Prompt:
+
+Please provide more detail based on your previous response:
+
+- [ ] Specify your main concern or topic.
+- [ ] Clarify any ambiguous points.
+- [ ] Outline your follow-up goals.
+
+Example:
+I’d like more information about the last suggestion, specifically how it applies to project deadlines.
